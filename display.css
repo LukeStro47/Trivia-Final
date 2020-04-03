@@ -1,0 +1,26 @@
+body {
+    background-color: #53bcfc;
+}
+table {
+    width: 100%;
+    height: 100%;
+}
+.teamNames {
+    width: 80%;
+}
+.teamPoints {
+    text-align: right;
+    width: 30%;
+}
+tr {
+    height: 20%;
+    font-size: 100px;
+}
+#firstRow {
+    font-family: 'Sen';
+}
+h1 {
+    font-family: 'Sen';
+    text-align: center;
+    font-size: 80px;
+}

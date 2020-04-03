@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://fonts.googleapis.com/css?family=Roboto|Sen|Source+Sans+Pro&display=swap" rel="stylesheet">
+        <script src="https://www.gstatic.com/firebasejs/7.13.1/firebase-app.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/7.13.1/firebase-analytics.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/7.13.1/firebase-database.js"></script>
+        <link rel="stylesheet" href="team.css">
+        <title></title>
+    </head>
+    <body id="all">
+        <div id="question">
+            <h3 id="question-place">Question</h3>
+            <input type="text" placeholder="Question" id="questionT">
+            <input type="text" placeholder="Answer" id="answer">
+            <input type="text" placeholder="Points" id="points" value="10" disabled>
+            <button onclick="answer()">Submit</button>
+        </div>
+        <ol id="list"></ol>
+    </body>
+    <script>
+        var firebaseConfig = {
+            apiKey: "AIzaSyBYqBkUZJvLRypx6zN0aDVBjWL7Zc5XGLs",
+            authDomain: "trivia-e4079.firebaseapp.com",
+            databaseURL: "https://trivia-e4079.firebaseio.com",
+            projectId: "trivia-e4079",
+            storageBucket: "trivia-e4079.appspot.com",
+            messagingSenderId: "233900104948",
+            appId: "1:233900104948:web:234b4286e01c2a02d852a1",
+            measurementId: "G-DVSNDZBCF9"
+        };
+        firebase.initializeApp(firebaseConfig);
+        var num = 0;
+        firebase.database().ref().once('value').then(function(snapshot) {
+            var data = snapshot.val();
+            num = Object.keys(data.Questions).length - 1;
+            for(var i = 0; i < Object.keys(data.Questions).length - 1; i++) {
+                var item2 = document.createElement("li");
+                item2.innerHTML = data.Questions[i].text;
+                document.getElementById('list').appendChild(item2);
+            }
+        });
+        function answer() {
+            firebase.database().ref('Questions/' + num).update({
+                text: document.getElementById('questionT').value,
+                extra: document.getElementById('answer').value,
+                points: parseInt(document.getElementById('points').value)
+            });
+            num++;
+            var item = document.createElement("li");
+            item.innerHTML = document.getElementById('questionT').value;
+            document.getElementById('list').appendChild(item);
+            document.getElementById('answer').value = "";
+            document.getElementById('questionT').value = "";
+        }
+    </script>
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://fonts.googleapis.com/css?family=Roboto|Sen|Source+Sans+Pro&display=swap" rel="stylesheet">
+        <script src="https://www.gstatic.com/firebasejs/7.13.1/firebase-app.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/7.13.1/firebase-analytics.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/7.13.1/firebase-database.js"></script>
+        <link rel="stylesheet" href="admin.css">
+        <title></title>
+    </head>
+    <body>
+        <h1 id="questionText" style="display: none"></h1>
+        <h3 id="answerText" style="display: none"></h3>
+        <h5 id="timeLeft" style="display: none">Time Left</h5>
+        <table id="teams">
+            <tr>
+                <th>Team Name</th>
+                <th>Points</th>
+                <th>Current Answer</th>
+                <th>Check</th>
+            </tr>
+        </table>
+        <br>
+        <button id="startGame" onclick="startGame()" class="btns">Start Game</button>
+        <button id="showAnswer" onclick="showAnswer()" class="btns" style="display: none">Show Answer</button>
+        <button id="nextQuestion" onclick="nextQuestion()" style="display: none" class="btns">Next Question</button>
+        <h1 class="bottomQuestions">Questions Left</h1>
+        <ol id="questionList" class="bottomQuestions">
+        </ol>
+    </body>
+    <script>
+        var firebaseConfig = {
+            apiKey: "AIzaSyBYqBkUZJvLRypx6zN0aDVBjWL7Zc5XGLs",
+            authDomain: "trivia-e4079.firebaseapp.com",
+            databaseURL: "https://trivia-e4079.firebaseio.com",
+            projectId: "trivia-e4079",
+            storageBucket: "trivia-e4079.appspot.com",
+            messagingSenderId: "233900104948",
+            appId: "1:233900104948:web:234b4286e01c2a02d852a1",
+            measurementId: "G-DVSNDZBCF9"
+        };
+        firebase.initializeApp(firebaseConfig);
+        var haveDone = false;
+        var last = -1;
+        var questionPoints = 0;
+        var answers = ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "" , "", "", "", "", "", "", "", "", "", "", ""];
+        var hasStarted = false;
+        var teamPoints = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        var questionNum = 0;
+        var pointCount = [];
+        var timeLeft = 50;
+        var timerId;
+        var elem = document.getElementById('timeLeft');
+        firebase.database().ref().once('value').then(function(snapshot) {
+            var questionData = snapshot.val();
+            if(questionData.Questions[0] != null) {
+                for(var e = 0; e < Object.keys(questionData.Questions).length - 1; e++) (function(e) {
+                    var question = document.createElement("li");
+                    question.innerHTML = "<b>" + questionData.Questions[e].text + "</b> - " + questionData.Questions[e].extra;
+                    document.getElementById('questionList').appendChild(question);
+                    question.id = "ques" + e;
+                    pointCount[e] = questionData.Questions[e].points;
+                })(e);
+                createTeams(questionData.Teams);
+            }
+        });
+        firebase.database().ref('Teams').on('value', function(snapshot) {
+            if(snapshot.val()[last + 1] != null && hasStarted == false) {
+                createTeams(snapshot.val());
+            } else if(hasStarted == true) {
+                var answerData = snapshot.val();
+                for(var a = 0; a < Object.keys(answerData).length - 1; a++) {
+                    if(answerData[a].currentAnswer != answers[a] && answerData[a].currentAnswer != "") {
+                        answers[a] = answerData[a].currentAnswer;
+                        document.getElementById('currentAnswer' + a).style.display = "block";
+                        document.getElementById('currentAnswer' + a).innerHTML = answerData[a].currentAnswer;
+                        document.getElementById('correct' + a).style.display = "block";
+                        document.getElementById('wrong' + a).style.display = "block";
+                    }
+                }
+            }
+        });
+        function answerCorrect(teamNum) {
+            firebase.database().ref('Teams/' + teamNum).update({
+                currentAnswer: "",
+                points: teamPoints[teamNum] += pointCount[teamNum],
+                outcome: true
+            });
+            teamPoints[teamNum] += questionPoints;
+            document.getElementById('correct' + teamNum).style.display = "none";
+            document.getElementById('currentAnswer' + teamNum).style.display = "none";
+            document.getElementById('wrong' + teamNum).style.display = "none";
+            document.getElementById('teamPoints' + teamNum).innerHTML = teamPoints[teamNum].toString();
+        }
+        function answerWrong(teamNum) {
+            firebase.database().ref('Teams/' + teamNum).update({
+                currentAnswer: "",
+                outcome: false
+            });
+            document.getElementById('correct' + teamNum).style.display = "none";
+            document.getElementById('currentAnswer' + teamNum).style.display = "none";
+            document.getElementById('wrong' + teamNum).style.display = "none";
+            document.getElementById('teamPoints' + teamNum).innerHTML = teamPoints[teamNum].toString();
+        }
+        function createTeams(data) {
+            for(var i = last + 1; i < Object.keys(data).length - 1; i++) (function(i) {
+                if(document.getElementById('rowNum' + i) == null) {
+                    var row = document.createElement("tr");
+                    row.id = "row" + i;
+                    var teamName = document.createElement("td");
+                    teamName.innerHTML = data[i].name;
+                    var teamPoints = document.createElement("td");
+                    teamPoints.id = "teamPoints" + i;
+                    teamPoints.innerHTML = data[i].points;
+                    var currentAnswer = document.createElement("td");
+                    var currentAnsText = document.createElement("p");
+                    currentAnsText.id = "currentAnswer" + i;
+                    currentAnswer.appendChild(currentAnsText);
+                    var check = document.createElement("td");
+                    var correctBtn = document.createElement("button");
+                    correctBtn.id = "correct" + i;
+                    correctBtn.innerHTML = "Correct";
+                    correctBtn.onclick = function() {answerCorrect(i)};
+                    correctBtn.style.display = "none";
+                    var wrongBtn = document.createElement("button");
+                    wrongBtn.id = "wrong" + i;
+                    wrongBtn.innerHTML = "Wrong";
+                    wrongBtn.onclick = function() {answerWrong(i)};
+                    wrongBtn.style.display = "none";
+                    row.appendChild(teamName);
+                    row.appendChild(teamPoints);
+                    row.appendChild(currentAnswer);
+                    row.appendChild(check);
+                    check.appendChild(correctBtn);
+                    check.appendChild(wrongBtn);
+                    document.getElementById('teams').appendChild(row);
+                }
+            })(i);
+            last = Object.keys(data).length - 2;
+        }
+        function startGame() {
+            hasStarted = true;
+            firebase.database().ref().update({
+                started: true
+            });
+            document.getElementById('nextQuestion').innerHTML = "First Question";
+            document.getElementById('nextQuestion').style.display = "block";
+            document.getElementById('startGame').style.display = "none";
+        }
+        function nextQuestion() {
+            if(questionNum % 5 == 0 && haveDone == false && questionNum != 0) {
+                if(questionNum == 35) {
+                    alert("Game Ended.");
+                    firebase.database().ref().update({
+                        ended: true
+                    });
+                } else {
+                    haveDone = true;
+                    alert("End of round");
+                    firebase.database().ref().update({
+                        roundOver: true
+                    });
+                }
+            } else {
+                haveDone = false;
+                startTimer();
+                document.getElementById('nextQuestion').innerHTML = "Next Question";
+                document.getElementById('showAnswer').style.display = "block";
+                document.getElementById('questionText').style.display = "block";
+                document.getElementById('timeLeft').style.display = "block";
+                document.getElementById('answerText').style.display = "block";
+                firebase.database().ref().update({
+                    currentQuestion: questionNum
+                });
+                var questionText = document.getElementById('ques' + questionNum).innerHTML.split(" - ");
+                var takeOffFirst = questionText[0].replace("<b>", "");
+                var final = takeOffFirst.replace("</b>", "");
+                document.getElementById('questionText').innerHTML = final;
+                document.getElementById('answerText').innerHTML = questionText[1];
+                document.getElementById('ques' + questionNum).remove();
+                questionNum++;
+            }
+        }
+        function startTimer() {
+            timerId = setInterval(countdown, 1000);
+        }
+        function countdown() {
+            if (timeLeft == 0) {
+                clearTimeout(timerId);
+                alert("Out of time");
+                timeLeft = 50;
+            } else {
+                elem.innerHTML = timeLeft + ' seconds remaining';
+                timeLeft--;
+            }
+        }
+        function showAnswer() {
+            clearTimeout(timerId);
+            timeLeft = 50;
+            document.getElementById('timeLeft').style.display = "none";
+            firebase.database().ref().update({
+                showAnswer: true
+            });
+            document.getElementById('showAnswer').style.display = "none";
+        }
+    </script>
+</html>

@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://fonts.googleapis.com/css?family=Roboto|Sen|Source+Sans+Pro&display=swap" rel="stylesheet">
+        <script src="https://www.gstatic.com/firebasejs/7.13.1/firebase-app.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/7.13.1/firebase-analytics.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/7.13.1/firebase-database.js"></script>
+        <link rel="stylesheet" href="display.css">
+        <title></title>
+    </head>
+    <body>
+        <h1 id="currentQuestion">Welcome! Go to lukestro.me/trivia to play.</h1>
+        <table id="table" style="display: none">
+            <tr id="firstRow">
+                <td class="teamNames"><b>TEAM NAME</b></td>
+                <td class="teamPoints"><b>POINTS</b></td>
+            </tr>
+        </table>
+    </body>
+    <script>
+        var firebaseConfig = {
+            apiKey: "AIzaSyBYqBkUZJvLRypx6zN0aDVBjWL7Zc5XGLs",
+            authDomain: "trivia-e4079.firebaseapp.com",
+            databaseURL: "https://trivia-e4079.firebaseio.com",
+            projectId: "trivia-e4079",
+            storageBucket: "trivia-e4079.appspot.com",
+            messagingSenderId: "233900104948",
+            appId: "1:233900104948:web:234b4286e01c2a02d852a1",
+            measurementId: "G-DVSNDZBCF9"
+        };
+        firebase.initializeApp(firebaseConfig);
+        var allQuestions = [];
+        var extraData = [];
+        var currentNum = 0;
+        var leaders = {
+            0: {
+                points: 0,
+                name: ""
+            },
+            1: {
+                points: 0,
+                name: ""
+            },
+            2: {
+                points: 0,
+                name: ""
+            },
+            3: {
+                points: 0,
+                name: ""
+            },
+            4: {
+                points: 0,
+                name: ""
+            },
+            5: {
+                points: 0,
+                name: ""
+            },
+            6: {
+                points: 0,
+                name: ""
+            },
+            7: {
+                points: 0,
+                name: ""
+            },8: {
+                points: 0,
+                name: ""
+            },9: {
+                points: 0,
+                name: ""
+            },10: {
+                points: 0,
+                name: ""
+            },11: {
+                points: 0,
+                name: ""
+            },12: {
+                points: 0,
+                name: ""
+            },13: {
+                points: 0,
+                name: ""
+            },14: {
+                points: 0,
+                name: ""
+            },15: {
+                points: 0,
+                name: ""
+            },16: {
+                points: 0,
+                name: ""
+            },17: {
+                points: 0,
+                name: ""
+            },18: {
+                points: 0,
+                name: ""
+            },19: {
+                points: 0,
+                name: ""
+            },20: {
+                points: 0,
+                name: ""
+            },21: {
+                points: 0,
+                name: ""
+            },22: {
+                points: 0,
+                name: ""
+            },23: {
+                points: 0,
+                name: ""
+            },24: {
+                points: 0,
+                name: ""
+            },25: {
+                points: 0,
+                name: ""
+            },26: {
+                points: 0,
+                name: ""
+            },27: {
+                points: 0,
+                name: ""
+            },28: {
+                points: 0,
+                name: ""
+            }, 29: {
+                points: 0,
+                name: ""
+            },
+            30: {
+                points: 0,
+                name: ""
+            },
+            31: {
+                points: 0,
+                name: ""
+            },
+            32: {
+                points: 0,
+                name: ""
+            },
+            33: {
+                points: 0,
+                name: ""
+            },
+            34: {
+                points: 0,
+                name: ""
+            },
+            35: {
+                points: 0,
+                name: ""
+            },
+            36: {
+                points: 0,
+                name: ""
+            },37: {
+                points: 0,
+                name: ""
+            },38: {
+                points: 0,
+                name: ""
+            },39: {
+                points: 0,
+                name: ""
+            },40: {
+                points: 0,
+                name: ""
+            },41: {
+                points: 0,
+                name: ""
+            },42: {
+                points: 0,
+                name: ""
+            },43: {
+                points: 0,
+                name: ""
+            },44: {
+                points: 0,
+                name: ""
+            },45: {
+                points: 0,
+                name: ""
+            },46: {
+                points: 0,
+                name: ""
+            },47: {
+                points: 0,
+                name: ""
+            },48: {
+                points: 0,
+                name: ""
+            },49: {
+                points: 0,
+                name: ""
+            },50: {
+                points: 0,
+                name: ""
+            },51: {
+                points: 0,
+                name: ""
+            },52: {
+                points: 0,
+                name: ""
+            },53: {
+                points: 0,
+                name: ""
+            },54: {
+                points: 0,
+                name: ""
+            },55: {
+                points: 0,
+                name: ""
+            },56: {
+                points: 0,
+                name: ""
+            },57: {
+                points: 0,
+                name: ""
+            },58: {
+                points: 0,
+                name: ""
+            },59: {
+                points: 0,
+                name: ""
+            },60: {
+                points: 0,
+                name: ""
+            },61: {
+                points: 0,
+                name: ""
+            },62: {
+                points: 0,
+                name: ""
+            },63: {
+                points: 0,
+                name: ""
+            },64: {
+                points: 0,
+                name: ""
+            },65: {
+                points: 0,
+                name: ""
+            },66: {
+                points: 0,
+                name: ""
+            },67: {
+                points: 0,
+                name: ""
+            },68: {
+                points: 0,
+                name: ""
+            },69: {
+                points: 0,
+                name: ""
+            },70: {
+                points: 0,
+                name: ""
+            },71: {
+                points: 0,
+                name: ""
+            },72: {
+                points: 0,
+                name: ""
+            },73: {
+                points: 0,
+                name: ""
+            },74: {
+                points: 0,
+                name: ""
+            },75: {
+                points: 0,
+                name: ""
+            },76: {
+                points: 0,
+                name: ""
+            },77: {
+                points: 0,
+                name: ""
+            },78: {
+                points: 0,
+                name: ""
+            }, 79: {
+                points: 0,
+                name: ""
+            },
+            80: {
+                points: 0,
+                name: ""
+            },
+            81: {
+                points: 0,
+                name: ""
+            },
+            82: {
+                points: 0,
+                name: ""
+            },
+            83: {
+                points: 0,
+                name: ""
+            },
+            84: {
+                points: 0,
+                name: ""
+            },
+            85: {
+                points: 0,
+                name: ""
+            },
+            86: {
+                points: 0,
+                name: ""
+            },87: {
+                points: 0,
+                name: ""
+            },88: {
+                points: 0,
+                name: ""
+            },89: {
+                points: 0,
+                name: ""
+            },90: {
+                points: 0,
+                name: ""
+            },91: {
+                points: 0,
+                name: ""
+            },92: {
+                points: 0,
+                name: ""
+            },93: {
+                points: 0,
+                name: ""
+            },94: {
+                points: 0,
+                name: ""
+            },95: {
+                points: 0,
+                name: ""
+            },96: {
+                points: 0,
+                name: ""
+            },97: {
+                points: 0,
+                name: ""
+            },98: {
+                points: 0,
+                name: ""
+            },99: {
+                points: 0,
+                name: ""
+            },100: {
+                points: 0,
+                name: ""
+            },101: {
+                points: 0,
+                name: ""
+            },
+            102: {
+                points: 0,
+                name: ""
+            },
+            103: {
+                points: 0,
+                name: ""
+            },
+            104: {
+                points: 0,
+                name: ""
+            },
+            105: {
+                points: 0,
+                name: ""
+            },
+            106: {
+                points: 0,
+                name: ""
+            },
+            107: {
+                points: 0,
+                name: ""
+            },108: {
+                points: 0,
+                name: ""
+            },109: {
+                points: 0,
+                name: ""
+            },110: {
+                points: 0,
+                name: ""
+            },111: {
+                points: 0,
+                name: ""
+            },112: {
+                points: 0,
+                name: ""
+            },113: {
+                points: 0,
+                name: ""
+            },114: {
+                points: 0,
+                name: ""
+            },115: {
+                points: 0,
+                name: ""
+            },116: {
+                points: 0,
+                name: ""
+            },117: {
+                points: 0,
+                name: ""
+            },118: {
+                points: 0,
+                name: ""
+            },119: {
+                points: 0,
+                name: ""
+            },120: {
+                points: 0,
+                name: ""
+            },121: {
+                points: 0,
+                name: ""
+            },122: {
+                points: 0,
+                name: ""
+            },123: {
+                points: 0,
+                name: ""
+            },124: {
+                points: 0,
+                name: ""
+            },125: {
+                points: 0,
+                name: ""
+            }
+        };
+        firebase.database().ref().once('value').then(function(snapshot) {
+            var data = snapshot.val();
+            for(var i = 0; i < Object.keys(data.Questions).length - 1; i++) {
+                allQuestions[i] = data.Questions[i].text;
+                extraData[i] = data.Questions[i].extra;
+            }
+        });
+        firebase.database().ref('currentQuestion').on('value', function(snapshot) {
+            var currentData = snapshot.val();
+            if(currentData != "no") {
+                document.getElementById('currentQuestion').style.display = "block";
+                document.getElementById('table').style.display = "none";
+                document.getElementById('currentQuestion').innerHTML = allQuestions[currentNum];
+            }
+        });
+        firebase.database().ref('showAnswer').on('value', function(snapshot) {
+            var showData = snapshot.val();
+            if(showData == true) {
+                document.getElementById('currentQuestion').innerHTML = extraData[currentNum];
+                firebase.database().ref().update({
+                    showAnswer: false
+                });
+                currentNum++;
+            }
+        });
+        firebase.database().ref('roundOver').on('value', function(snapshot) {
+            var roundData = snapshot.val();
+            if(roundData == true) {
+                createLeaderboard();
+            }
+        });
+        firebase.database().ref('ended').on('value', function(snapshot) {
+            var endData = snapshot.val();
+            if(endData == true) {
+                createLeaderboard();
+                document.getElementById('tr0').style.color = "lightGreen";
+            }
+        });
+        function createLeaderboard() {
+            firebase.database().ref().update({
+                roundOver: false
+            });
+            for(var a = 0; a < 126; a++) {
+                if(document.getElementById('tr' + a) != null) {
+                    document.getElementById('tr' + a).remove();
+                }
+            }
+            firebase.database().ref().once('value').then(function(snapshot) {
+                var leaderData = snapshot.val();
+                for(var e = 0; e < Object.keys(leaderData.Teams).length - 1; e++) (function(e) {
+                    leaders[e].points = leaderData.Teams[e].points;
+                    leaders[e].name = leaderData.Teams[e].name;
+                })(e);
+                var newObj = bubble_Sort(leaders);
+                addToTable(newObj);
+            });
+        }
+        function bubble_Sort(a) {
+            var swapp;
+            var n = 125;
+            var x = a;
+            do {
+                swapp = false;
+                for (var i=0; i < n; i++) {
+                    if (x[i].points < x[i+1].points) {
+                        console.log("ye")
+                        var temp = x[i];
+                        x[i] = x[i+1];
+                        x[i+1] = temp;
+                        swapp = true;
+                    }
+                }
+                n--;
+            } while (swapp);
+            return x; 
+        }
+        function addToTable(leaderObject) {
+            document.getElementById('currentQuestion').style.display = "none";
+            for(var o = 0; o < 126; o++) {
+                if(leaderObject[o].name != "") {
+                    var leaderRow = document.createElement("tr");
+                    leaderRow.id = "tr" + o;
+                    var leaderNameTd = document.createElement("td");
+                    leaderNameTd.innerHTML = leaderObject[o].name;
+                    leaderNameTd.classList.add("teamNames");
+                    var leaderPointsTd = document.createElement("td");
+                    leaderPointsTd.innerHTML = leaderObject[o].points;
+                    leaderPointsTd.classList.add("teamPoints");
+                    leaderRow.appendChild(leaderNameTd);
+                    leaderRow.appendChild(leaderPointsTd);
+                    document.getElementById("table").appendChild(leaderRow);
+                    document.getElementById("table").style.display = "block";
+                    leaderRow.style.fontFamily = "Roboto";
+                }
+            }
+        }
+    </script>
+</html>
