@@ -17,6 +17,7 @@
             <input type="text" placeholder="Answer" id="answer">
             <input type="text" placeholder="Points" id="points" value="10" disabled>
             <button onclick="answer()">Submit</button>
+            <button onclick="reset()">Reset Questions</button>
         </div>
         <ol id="list"></ol>
     </body>
@@ -33,8 +34,10 @@
         };
         firebase.initializeApp(firebaseConfig);
         var num = 0;
+        firebase.database().ref('')
         firebase.database().ref().once('value').then(function(snapshot) {
             var data = snapshot.val();
+            var perRound = parseInt(prompt("How many questions per round would you like, if you're changing from " + data.perRound + "?"));
             num = Object.keys(data.Questions).length - 1;
             for(var i = 0; i < Object.keys(data.Questions).length - 1; i++) {
                 var item2 = document.createElement("li");
@@ -54,6 +57,12 @@
             document.getElementById('list').appendChild(item);
             document.getElementById('answer').value = "";
             document.getElementById('questionT').value = "";
+        }
+        function reset() {
+            firebase.database().ref('Questions').set({
+                placeholder: true
+            });
+            setTimeout(function(){ location.reload(); }, 750);
         }
     </script>
 </html>

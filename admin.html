@@ -26,6 +26,7 @@
         <button id="startGame" onclick="startGame()" class="btns">Start Game</button>
         <button id="showAnswer" onclick="showAnswer()" class="btns" style="display: none">Show Answer</button>
         <button id="nextQuestion" onclick="nextQuestion()" style="display: none" class="btns">Next Question</button>
+        <button id="endGame" onclick="endGame()" style="display: none" class="btns">End Game</button>
         <h1 class="bottomQuestions">Questions Left</h1>
         <ol id="questionList" class="bottomQuestions">
         </ol>
@@ -53,8 +54,12 @@
         var timeLeft = 50;
         var timerId;
         var elem = document.getElementById('timeLeft');
+        var perRound = 0;
+        var maxOut = 100;
         firebase.database().ref().once('value').then(function(snapshot) {
             var questionData = snapshot.val();
+            perRound = parseInt(questionData.perRound);
+            maxOut = Object.keys(questionData.Questions).length - 2;
             if(questionData.Questions[0] != null) {
                 for(var e = 0; e < Object.keys(questionData.Questions).length - 1; e++) (function(e) {
                     var question = document.createElement("li");
@@ -147,11 +152,12 @@
             });
             document.getElementById('nextQuestion').innerHTML = "First Question";
             document.getElementById('nextQuestion').style.display = "block";
+            document.getElementById('endGame').style.display = "block";
             document.getElementById('startGame').style.display = "none";
         }
         function nextQuestion() {
-            if(questionNum % 5 == 0 && haveDone == false && questionNum != 0) {
-                if(questionNum == 35) {
+            if(questionNum % perRound == 0 && haveDone == false && questionNum != 0) {
+                if(questionNum == maxOut) {
                     alert("Game Ended.");
                     firebase.database().ref().update({
                         ended: true
@@ -204,6 +210,19 @@
                 showAnswer: true
             });
             document.getElementById('showAnswer').style.display = "none";
+        }
+        function endGame() {
+            firebase.database().ref().update({
+                ended: true,
+                started: false,
+                showAnswer: false,
+                roundOver: false,
+                currentQuestion: "no"
+            });
+            firebase.database('Teams').set({
+                placeholder: true
+            });
+            setTimeout(function(){ location.reload(); }, 750);
         }
     </script>
 </html>

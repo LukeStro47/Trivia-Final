@@ -72,11 +72,12 @@
                 document.getElementById('blockedOut').style.display = "block";
             }
             if(Cookies.get('name') != null) {
-                teamNum = Cookies.get('name');
-                document.getElementById('blockedOut').style.display = "none";
-                document.getElementById('beforeGame').style.display = "none";
-                document.getElementById('waitingForGame').style.display = "block";
-                listenForQuestion();
+//                teamNum = Cookies.get('name');
+//                document.getElementById('blockedOut').style.display = "none";
+//                document.getElementById('beforeGame').style.display = "none";
+//                document.getElementById('waitingForGame').style.display = "block";
+//                listenForQuestion();
+                Cookies.remove('name');
             }
         });
         function teamName() {
