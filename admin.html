@@ -219,7 +219,7 @@
                 roundOver: false,
                 currentQuestion: "no"
             });
-            firebase.database('Teams').set({
+            firebase.database().ref('Teams').set({
                 placeholder: true
             });
             setTimeout(function(){ location.reload(); }, 750);
