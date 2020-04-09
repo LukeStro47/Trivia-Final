@@ -72,12 +72,14 @@
                 document.getElementById('blockedOut').style.display = "block";
             }
             if(Cookies.get('name') != null) {
-//                teamNum = Cookies.get('name');
-//                document.getElementById('blockedOut').style.display = "none";
-//                document.getElementById('beforeGame').style.display = "none";
-//                document.getElementById('waitingForGame').style.display = "block";
-//                listenForQuestion();
                 Cookies.remove('name');
+            }
+            if(Cookies.get('num') != null) {
+                teamNum = Cookies.get('num');
+                document.getElementById('blockedOut').style.display = "none";
+                document.getElementById('beforeGame').style.display = "none";
+                document.getElementById('waitingForGame').style.display = "block";
+                listenForQuestion();
             }
         });
         function teamName() {
@@ -109,7 +111,7 @@
                     }
                     if(canCreate) {
                         teamNum = Object.keys(teamData.Teams).length - 1;
-                        Cookies.set('name', teamNum);
+                        Cookies.set('num', teamNum);
                         firebase.database().ref('Teams/' + teamNum).update({
                             name: name,
                             points: 0,
