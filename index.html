@@ -60,6 +60,7 @@
         var timeLeft = 45;
         var timerId;
         var questionNum;
+        var myPoints = 0;
         var elem = document.getElementById('timeLeft');
         firebase.database().ref().once('value').then(function(snapshot) {
             var data = snapshot.val();
@@ -165,6 +166,7 @@
             document.getElementById('postQuestion').style.display = "block";
             firebase.database().ref('Teams/' + teamNum).on('value', function(snapshot) {
                 var answerData = snapshot.val();
+                myPoints = answerData.points;
                 if(answerData.outcome != "unknown") {
                     if(answerData.outcome == true) {
                         document.getElementById('all').style.backgroundColor = "lightGreen";
@@ -211,12 +213,14 @@
         function listenForEnd() {
             firebase.database().ref('ended').on('value', function(snapshot) {
                 var endData = snapshot.val();
-                if(endData === true) {
+                if(endData == true) {
                     document.getElementById('waitingForGame').style.display = "none";
                     document.getElementById('postQuestion').style.display = "none";
                     document.getElementById('waitingForQuestion').style.display = "none";
                     document.getElementById('question').style.display = "none";
                     document.getElementById('gameEnded').style.display = "block";
+                    document.getElementById('gameEnded').innerHTML += "You scored a total of " + myPoints + " points."
+                    Cookies.remove('num');
                     firebase.database().ref('ended').off('value');
                 }
             });

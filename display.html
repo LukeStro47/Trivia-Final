@@ -34,6 +34,7 @@
         var allQuestions = [];
         var extraData = [];
         var currentNum = 0;
+        var done = false;
         var leaders = {
             0: {
                 points: 0,
@@ -476,6 +477,7 @@
         firebase.database().ref('ended').on('value', function(snapshot) {
             var endData = snapshot.val();
             if(endData == true) {
+                done = true;
                 createLeaderboard();
             }
         });
@@ -535,6 +537,11 @@
                     document.getElementById("table").style.display = "block";
                     leaderRow.style.fontFamily = "Roboto";
                 }
+            }
+            if(done == true) {
+                firebase.database().ref('Teams').set({
+                    placeholder: true
+                });
             }
         }
     </script>
