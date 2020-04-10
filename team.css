@@ -38,3 +38,6 @@ button {
     text-align: center;
     padding-top: 15px;
 }
+ol {
+    font-family: "Roboto";
+}
