@@ -27,7 +27,7 @@
             <button onclick="teamName()">Submit</button>
         </div>
         <div id="blockedOut" style="display: none">
-            <p>Unfortunately, this game has already started. You can play along just by watching the Facebook live.</p>
+            <p>Unfortunately, this game has already started. You can play along just by watching the Zoom.</p>
         </div>
         <div id="waitingForGame" style="display: none">
             <p>Currently waiting for the first question.</p>
@@ -36,7 +36,7 @@
             <p>Awaiting your question to be graded.</p>
         </div>
         <div id="gameEnded" style="display: none">
-            <p id="gameEndedText">The game has ended. Look up on the Facebook Live to see the rankings.</p>
+            <p id="gameEndedText">The game has ended. Look up on Zoom to see the rankings.</p>
         </div>
         <div id="waitingForQuestion" style="display: none">
             <p>Awaiting next question.</p>
@@ -229,7 +229,7 @@
                     document.getElementById('waitingForQuestion').style.display = "none";
                     document.getElementById('question').style.display = "none";
                     document.getElementById('gameEnded').style.display = "block";
-                    document.getElementById('gameEndedText').innerHTML += "You scored a total of " + myPoints + " points.";
+                    document.getElementById('gameEndedText').innerHTML += " You scored a total of " + myPoints + " points.";
                     Cookies.remove('num');
                     firebase.database().ref('ended').off('value');
                 }

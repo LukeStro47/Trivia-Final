@@ -157,7 +157,7 @@
         }
         function nextQuestion() {
             if(questionNum % perRound == 0 && haveDone == false && questionNum != 0) {
-                if(questionNum == maxOut) {
+                if(questionNum == maxOut + 1) {
                     alert("Game Ended.");
                     firebase.database().ref().update({
                         ended: true
