@@ -84,8 +84,8 @@
             if(Cookies.get('name') != null) {
                 Cookies.remove('name');
             }
-            if(Cookies.get('num') != null) {
-                teamNum = Cookies.get('num');
+            if(Cookies.get('num2') != null) {
+                teamNum = Cookies.get('num2');
                 document.getElementById('blockedOut').style.display = "none";
                 document.getElementById('beforeGame').style.display = "none";
                 document.getElementById('waitingForGame').style.display = "block";
@@ -121,7 +121,7 @@
                     }
                     if(canCreate) {
                         teamNum = Object.keys(teamData.Teams).length - 1;
-                        Cookies.set('num', teamNum);
+                        Cookies.set('num2', teamNum);
                         firebase.database().ref('Teams/' + teamNum).update({
                             name: name,
                             points: 0,
@@ -230,7 +230,7 @@
                     document.getElementById('question').style.display = "none";
                     document.getElementById('gameEnded').style.display = "block";
                     document.getElementById('gameEndedText').innerHTML += " You scored a total of " + myPoints + " points.";
-                    Cookies.remove('num');
+                    Cookies.remove('num2');
                     firebase.database().ref('ended').off('value');
                 }
             });
