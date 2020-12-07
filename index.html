@@ -21,7 +21,7 @@
         </script>
     </head>
     <body id="all">
-        <div id="beforeGame">
+        <div id="beforeGame" style="display: block">
             <h1>Join the Game Below</h1>
             <input type="text" placeholder="Team Name" id="team-name">
             <button onclick="teamName()">Submit</button>
@@ -44,11 +44,19 @@
             <p id="postAnswer">Answer: </p>
             <p id="pointCount">Points: 0</p>
         </div>
-        <div id="question" style="display: none">
+        <div id="question" style="display: none;">
             <h3 id="question-place">Question</h3>
-            <input type="text" placeholder="Answer" id="answer">
-            <h3 id="timeLeft">45 seconds remaining</h3>
-            <button onclick="clearTimeout(timerId); answer()">Submit</button>
+            <div id="fr">
+                <input type="text" placeholder="Answer" id="answer">
+                <button onclick="clearTimeout(timerId); answer()">Submit</button>
+            </div>
+            <div id="mc">
+                <button onclick="answerMC(0)" id="answer0">-</button>
+                <button onclick="answerMC(1)" id="answer1">-</button>
+                <button onclick="answerMC(2)" id="answer2">-</button>
+                <button onclick="answerMC(3)" id="answer3">-</button>
+            </div>
+            <h3 id="timeLeft">25 seconds remaining</h3>
         </div>
     </body>
     <script>
@@ -65,8 +73,8 @@
         firebase.initializeApp(firebaseConfig);
         var teamNum = 111;
         var allQuestions = [];
-        var extraData = [];
-        var timeLeft = 45;
+        var extraData = {};
+        var timeLeft = 25;
         var timerId;
         var questionNum;
         var myPoints = 0;
@@ -75,17 +83,30 @@
             var data = snapshot.val();
             for(var i = 0; i < Object.keys(data.Questions).length - 1; i++) {
                 allQuestions[i] = data.Questions[i].text;
-                extraData[i] = data.Questions[i].extra;
+                if(data.Questions[i].type == "fr") {
+                    extraData[i] = {};
+                    extraData[i].type = "fr";
+                    extraData[i].answer = data.Questions[i].extra;
+                } else {
+                    extraData[i] = {};
+                    extraData[i].type = "mc";
+                    extraData[i][0] = data.Questions[i].others[0];
+                    extraData[i][1] = data.Questions[i].others[1];
+                    extraData[i][2] = data.Questions[i].others[2];
+                    extraData[i][3] = data.Questions[i].others[3];
+                    extraData[i].extra = data.Questions[i].others.extra;
+                    console.log(extraData);
+                }
             }
             if(data.started == true) {
                 document.getElementById('beforeGame').style.display = "none";
                 document.getElementById('blockedOut').style.display = "block";
             }
-            if(Cookies.get('num2') != null) {
-                Cookies.remove('num2');
-            }
             if(Cookies.get('num3') != null) {
-                teamNum = Cookies.get('num3');
+                Cookies.remove('num3');
+            }
+            if(Cookies.get('myTeamNumber') != null) {
+                teamNum = Cookies.get('myTeamNumber');
                 document.getElementById('blockedOut').style.display = "none";
                 document.getElementById('beforeGame').style.display = "none";
                 document.getElementById('waitingForGame').style.display = "block";
@@ -121,7 +142,7 @@
                     }
                     if(canCreate) {
                         teamNum = Object.keys(teamData.Teams).length - 1;
-                        Cookies.set('num3', teamNum);
+                        Cookies.set('myTeamNumber', teamNum);
                         firebase.database().ref('Teams/' + teamNum).update({
                             name: name,
                             points: 0,
@@ -141,8 +162,22 @@
             document.getElementById('postQuestion').style.display = "none";
             document.getElementById('waitingForQuestion').style.display = "none";
             document.getElementById('question').style.display = "block";
+            document.getElementById('question').style.display = "block";
+            if(extraData[number].type == "fr") {
+                document.getElementById('fr').style.display = "block";
+                document.getElementById('mc').style.display = "none";
+            } else {
+                document.getElementById('mc').style.display = "block";
+                document.getElementById('fr').style.display = "none";
+                var answerNum = Math.floor(Math.random() * 3);
+                var hasAddedAnswer = false;
+                console.log(answerNum);
+                for(var i = 0; i < 4; i++) {
+                    document.getElementById("answer" + i).innerHTML = extraData[number][i];
+                }
+            }
             clearTimeout(timerId);
-            timeLeft = 45;
+            timeLeft = 25;
             document.getElementById('question-place').innerHTML = allQuestions[number];
             startTimer();
         }
@@ -159,7 +194,7 @@
             }
         }
         function answer() {
-            elem.innerHTML = '45 seconds remaining';
+            elem.innerHTML = '25 seconds remaining';
             if(timeLeft != 0) {
                 firebase.database().ref('Teams/' + teamNum).update({
                     currentAnswer: document.getElementById('answer').value,
@@ -171,7 +206,47 @@
                     outcome: "unknown"
                 });
             }
-            timeLeft = 45;
+            timeLeft = 25;
+            document.getElementById('question').style.display = "none";
+            document.getElementById('postQuestion').style.display = "block";
+            firebase.database().ref('Teams/' + teamNum).on('value', function(snapshot) {
+                var answerData = snapshot.val();
+                myPoints = answerData.points;
+                if(answerData.outcome != "unknown") {
+                    if(answerData.outcome == true) {
+                        document.getElementById('all').style.backgroundColor = "lightGreen";
+                        document.getElementById('postQuestion').style.display = "none";
+                        document.getElementById('waitingForQuestion').style.display = "block";
+                        document.getElementById('outcome').innerHTML = "You got that one right!";
+                        document.getElementById('pointCount').innerHTML = "Points: " + myPoints;
+                        document.getElementById('postAnswer').innerHTML = "Answer: " + extraData[questionNum];
+                        firebase.database().ref('Teams/' + teamNum).off('value');
+                    } else {
+                        document.getElementById('all').style.backgroundColor = "#f7584d";
+                        document.getElementById('postQuestion').style.display = "none";
+                        document.getElementById('waitingForQuestion').style.display = "block";
+                        document.getElementById('outcome').innerHTML = "You got that one wrong.";
+                        document.getElementById('pointCount').innerHTML = "Points: " + myPoints;
+                        document.getElementById('postAnswer').innerHTML = "Answer: " + extraData[questionNum];
+                        firebase.database().ref('Teams/' + teamNum).off('value');
+                    }
+                }
+            });
+        }
+        function answerMC(theAnswerNum) {
+            elem.innerHTML = '45 seconds remaining';
+            if(timeLeft != 0) {
+                firebase.database().ref('Teams/' + teamNum).update({
+                    currentAnswer: document.getElementById("answer" + theAnswerNum).innerHTML,
+                    outcome: "unknown"
+                });
+            } else {
+                firebase.database().ref('Teams/' + teamNum).update({
+                    currentAnswer: document.getElementById('answer').value + "###",
+                    outcome: "unknown"
+                });
+            }
+            timeLeft = 25;
             document.getElementById('question').style.display = "none";
             document.getElementById('postQuestion').style.display = "block";
             firebase.database().ref('Teams/' + teamNum).on('value', function(snapshot) {
@@ -184,7 +259,7 @@
                         document.getElementById('waitingForQuestion').style.display = "block";
                         document.getElementById('outcome').innerHTML = "You got that one right!";
                         document.getElementById('pointCount').innerHTML = "Points: " + answerData.points;
-                        document.getElementById('postAnswer').innerHTML = "Answer: " + extraData[questionNum];
+                        document.getElementById('postAnswer').innerHTML = "Answer: " + extraData[questionNum][extraData[questionNum].extra];
                         firebase.database().ref('Teams/' + teamNum).off('value');
                     } else {
                         document.getElementById('all').style.backgroundColor = "#f7584d";
@@ -192,7 +267,7 @@
                         document.getElementById('waitingForQuestion').style.display = "block";
                         document.getElementById('outcome').innerHTML = "You got that one wrong.";
                         document.getElementById('pointCount').innerHTML = "Points: " + answerData.points;
-                        document.getElementById('postAnswer').innerHTML = "Answer: " + extraData[questionNum];
+                        document.getElementById('postAnswer').innerHTML = "Answer: " + extraData[questionNum][extraData[questionNum].extra];
                         firebase.database().ref('Teams/' + teamNum).off('value');
                     }
                 }
@@ -215,7 +290,7 @@
                         document.getElementById('question').style.display = "none";
                         document.getElementById('postQuestion').style.display = "block";
                         clearTimeout(timerId);
-                        timeLeft = 45;
+                        timeLeft = 25;
                     }
                 }
             });
@@ -230,7 +305,7 @@
                     document.getElementById('question').style.display = "none";
                     document.getElementById('gameEnded').style.display = "block";
                     document.getElementById('gameEndedText').innerHTML += " You scored a total of " + myPoints + " points.";
-                    Cookies.remove('num3');
+                    Cookies.remove('myTeamNumber');
                     firebase.database().ref('ended').off('value');
                 }
             });

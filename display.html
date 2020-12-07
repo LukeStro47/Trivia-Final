@@ -32,7 +32,7 @@
         };
         firebase.initializeApp(firebaseConfig);
         var allQuestions = [];
-        var extraData = [];
+        var extraData = {};
         var currentNum = 0;
         var done = false;
         var leaders = {
@@ -447,7 +447,12 @@
             var data = snapshot.val();
             for(var i = 0; i < Object.keys(data.Questions).length - 1; i++) {
                 allQuestions[i] = data.Questions[i].text;
-                extraData[i] = data.Questions[i].extra;
+                extraData[i] = {};
+                extraData[i][0] = data.Questions[i].others[0];
+                extraData[i][1] = data.Questions[i].others[1];
+                extraData[i][2] = data.Questions[i].others[2];
+                extraData[i][3] = data.Questions[i].others[3];
+                extraData[i].extra = data.Questions[i].others[data.Questions[i].others.extra];
             }
         });
         firebase.database().ref('currentQuestion').on('value', function(snapshot) {
@@ -455,13 +460,13 @@
             if(currentData != "no") {
                 document.getElementById('currentQuestion').style.display = "block";
                 document.getElementById('table').style.display = "none";
-                document.getElementById('currentQuestion').innerHTML = allQuestions[currentNum];
+                document.getElementById('currentQuestion').innerHTML = allQuestions[currentNum] + "<br><p style='font-size: 25px;'>" + extraData[currentNum][0] + "<br>" + extraData[currentNum][1] + "<br>" + extraData[currentNum][2] + "<br>" + extraData[currentNum][3] + "</p>";
             }
         });
         firebase.database().ref('showAnswer').on('value', function(snapshot) {
             var showData = snapshot.val();
             if(showData == true) {
-                document.getElementById('currentQuestion').innerHTML = extraData[currentNum];
+                document.getElementById('currentQuestion').innerHTML = extraData[currentNum].extra;
                 firebase.database().ref().update({
                     showAnswer: false
                 });

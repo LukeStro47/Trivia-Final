@@ -45,10 +45,10 @@
         firebase.initializeApp(firebaseConfig);
         var haveDone = false;
         var last = -1;
-        var questionPoints = 0;
-        var answers = ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "" , "", "", "", "", "", "", "", "", "", "", ""];
+        var questionPoints = 10;
+        var answers = new Array(125);
         var hasStarted = false;
-        var teamPoints = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        var teamPoints = new Array(125);
         var questionNum = 0;
         var pointCount = [];
         var timeLeft = 50;
@@ -56,6 +56,8 @@
         var elem = document.getElementById('timeLeft');
         var perRound = 0;
         var maxOut = 100;
+        var answerNow = "";
+        var currentType = "";
         firebase.database().ref().once('value').then(function(snapshot) {
             var questionData = snapshot.val();
             perRound = parseInt(questionData.perRound);
@@ -63,7 +65,11 @@
             if(questionData.Questions[0] != null) {
                 for(var e = 0; e < Object.keys(questionData.Questions).length - 1; e++) (function(e) {
                     var question = document.createElement("li");
-                    question.innerHTML = "<b>" + questionData.Questions[e].text + "</b> - " + questionData.Questions[e].extra;
+                    if(questionData.Questions[e].type == "fr") {
+                        question.innerHTML = "<b>" + questionData.Questions[e].text + "</b> - " + questionData.Questions[e].extra + " - fr";
+                    } else {
+                        question.innerHTML = "<b>" + questionData.Questions[e].text + "</b> - " + questionData.Questions[e].others[questionData.Questions[e].others.extra] + " - mc";
+                    }
                     document.getElementById('questionList').appendChild(question);
                     question.id = "ques" + e;
                     pointCount[e] = questionData.Questions[e].points;
@@ -80,9 +86,16 @@
                     if(answerData[a].currentAnswer != answers[a] && answerData[a].currentAnswer != "") {
                         answers[a] = answerData[a].currentAnswer;
                         document.getElementById('currentAnswer' + a).style.display = "block";
-                        document.getElementById('currentAnswer' + a).innerHTML = answerData[a].currentAnswer;
+                        document.getElementById('currentAnswer' + a).innerHTML = answers[a];
                         document.getElementById('correct' + a).style.display = "block";
                         document.getElementById('wrong' + a).style.display = "block";
+                        if(currentType == "mc") {
+                            if(answers[a] == answerNow) {
+                                answerCorrect(a);
+                            } else {
+                                answerWrong(a);
+                            }
+                        }
                     }
                 }
             }
@@ -90,7 +103,7 @@
         function answerCorrect(teamNum) {
             firebase.database().ref('Teams/' + teamNum).update({
                 currentAnswer: "",
-                points: teamPoints[teamNum] += pointCount[teamNum],
+                points: teamPoints[teamNum] + pointCount[teamNum],
                 outcome: true
             });
             teamPoints[teamNum] += questionPoints;
@@ -112,13 +125,14 @@
         function createTeams(data) {
             for(var i = last + 1; i < Object.keys(data).length - 1; i++) (function(i) {
                 if(document.getElementById('rowNum' + i) == null) {
+                    teamPoints[i] = 0;
                     var row = document.createElement("tr");
                     row.id = "row" + i;
                     var teamName = document.createElement("td");
                     teamName.innerHTML = data[i].name;
-                    var teamPoints = document.createElement("td");
-                    teamPoints.id = "teamPoints" + i;
-                    teamPoints.innerHTML = data[i].points;
+                    var teamPointsH = document.createElement("td");
+                    teamPointsH.id = "teamPoints" + i;
+                    teamPointsH.innerHTML = data[i].points;
                     var currentAnswer = document.createElement("td");
                     var currentAnsText = document.createElement("p");
                     currentAnsText.id = "currentAnswer" + i;
@@ -135,7 +149,7 @@
                     wrongBtn.onclick = function() {answerWrong(i)};
                     wrongBtn.style.display = "none";
                     row.appendChild(teamName);
-                    row.appendChild(teamPoints);
+                    row.appendChild(teamPointsH);
                     row.appendChild(currentAnswer);
                     row.appendChild(check);
                     check.appendChild(correctBtn);
@@ -157,7 +171,7 @@
         }
         function nextQuestion() {
             if(questionNum % perRound == 0 && haveDone == false && questionNum != 0) {
-                if(questionNum == maxOut + 1) {
+                if(questionNum == maxOut + 1) { //HMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
                     alert("Game Ended.");
                     firebase.database().ref().update({
                         ended: true
@@ -185,7 +199,9 @@
                 var final = takeOffFirst.replace("</b>", "");
                 document.getElementById('questionText').innerHTML = final;
                 document.getElementById('answerText').innerHTML = questionText[1];
+                answerNow = questionText[1];
                 document.getElementById('ques' + questionNum).remove();
+                currentType = questionText[2];
                 questionNum++;
             }
         }
@@ -196,7 +212,7 @@
             if (timeLeft == 0) {
                 clearTimeout(timerId);
                 alert("Out of time");
-                timeLeft = 50;
+                timeLeft = 30;
             } else {
                 elem.innerHTML = timeLeft + ' seconds remaining';
                 timeLeft--;
@@ -204,7 +220,7 @@
         }
         function showAnswer() {
             clearTimeout(timerId);
-            timeLeft = 50;
+            timeLeft = 30;
             document.getElementById('timeLeft').style.display = "none";
             firebase.database().ref().update({
                 showAnswer: true

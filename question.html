@@ -14,7 +14,10 @@
         <div id="question">
             <h3 id="question-place">Question</h3>
             <input type="text" placeholder="Question" id="questionT">
-            <input type="text" placeholder="Answer" id="answer">
+            <input type="text" placeholder="Correct Answer" id="answer">
+            <input type="text" placeholder="Erroneous Answer" id="erroneous0">
+            <input type="text" placeholder="Erroneous Answer" id="erroneous1">
+            <input type="text" placeholder="Erroneous Answer" id="erroneous2">
             <input type="text" placeholder="Points" id="points" value="10" style="display: none" disabled>
             <button onclick="answer()">Submit</button>
             <button onclick="reset()">Reset Questions</button>
@@ -38,18 +41,54 @@
             var data = snapshot.val();
             //var perRound = parseInt(prompt("How many questions per round would you like, if you're changing from " + data.perRound + "?"));
             num = Object.keys(data.Questions).length - 1;
-            for(var i = 0; i < Object.keys(data.Questions).length - 1; i++) {
+            for(var i = 0; i < num; i++) {
                 var item2 = document.createElement("li");
                 item2.innerHTML = data.Questions[i].text;
                 document.getElementById('list').appendChild(item2);
             }
         });
         function answer() {
-            firebase.database().ref('Questions/' + num).update({
-                text: document.getElementById('questionT').value,
-                extra: document.getElementById('answer').value,
-                points: parseInt(document.getElementById('points').value)
-            });
+            if(document.getElementById('erroneous0').value != "") {
+                var answerNum = Math.floor(Math.random() * 4);
+                var hasAddedAnswer = false;
+                var answersOrdered = new Array(4);
+                var theRightOne;
+                var a = 0;
+                for(var i = 0; a < 4; i++) {
+                    if(parseInt(i) == parseInt(answerNum)) {
+                        if(hasAddedAnswer) {
+                            answersOrdered[a] = document.getElementById("erroneous" + i).value;
+                        } else {
+                            answersOrdered[i] = document.getElementById("answer").value;
+                            hasAddedAnswer = true;
+                            theRightOne = i;
+                            i--;
+                        }
+                    } else {
+                        answersOrdered[a] = document.getElementById("erroneous" + i).value;
+                    }
+                    a++;
+                }
+                firebase.database().ref('Questions/' + num).update({
+                    text: document.getElementById('questionT').value,
+                    points: parseInt(document.getElementById('points').value),
+                    type: "mc"
+                });
+                firebase.database().ref('Questions/' + num + '/others').update({
+                    extra: theRightOne,
+                    0: answersOrdered[0],
+                    1: answersOrdered[1],
+                    2: answersOrdered[2],
+                    3: answersOrdered[3]
+                });
+            } else {
+                firebase.database().ref('Questions/' + num).update({
+                    text: document.getElementById('questionT').value,
+                    points: parseInt(document.getElementById('points').value),
+                    extra: document.getElementById("answer").value,
+                    type: "fr"
+                });
+            }
             num++;
             var item = document.createElement("li");
             item.innerHTML = document.getElementById('questionT').value;
