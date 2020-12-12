@@ -499,23 +499,6 @@
                 createLeaderboard();
             }
         });
-        firebase.database().ref().once('value').then(function(snapshot) {
-            var leaderData = snapshot.val();
-            for(var e = 0; e < Object.keys(leaderData.Teams).length - 1; e++) (function(e) {
-                leaders[e] = {};
-                leaders[e].points = leaderData.Teams[e].points;
-                leaders[e].name = leaderData.Teams[e].name;
-                leaders[e].teamNum = e;
-            })(e);
-            var newObj = bubble_Sort(leaders);
-            console.log(newObj)
-            if(leaders[0].points == leaders[1].points && tieBreak && !isRoundOver) {
-                enterTieBreak(newObj);
-            } else {
-                addToTable(newObj);
-                isRoundOver = false;
-            }
-        });
         function createLeaderboard() {
             firebase.database().ref().update({
                 roundOver: false
@@ -534,10 +517,11 @@
                     leaders[e].teamNum = e;
                 })(e);
                 var newObj = bubble_Sort(leaders);
-                if(leaders[0].points == leaders[1].points && tieBreak) {
+                if(leaders[0].points == leaders[1].points && tieBreak && !isRoundOver) {
                     enterTieBreak(newObj);
                 } else {
                     addToTable(newObj);
+                    isRoundOver = false;
                 }
             });
         }
