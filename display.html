@@ -35,7 +35,7 @@
         var extraData = {};
         var currentNum = 0;
         var done = false;
-        var leaders = {
+        /*var leaders = {
             0: {
                 points: 0,
                 name: ""
@@ -442,9 +442,17 @@
                 points: 0,
                 name: ""
             }
-        };
+        };*/
+        var leaders = {};
+        var tieBreak;
+        var tieBreakA;
+        var tieBreakQ;
+        var isRoundOver = false;
         firebase.database().ref().once('value').then(function(snapshot) {
             var data = snapshot.val();
+            tieBreak = data.tieBreakExists;
+            tieBreakQ = data.TieBreak.Question;
+            tieBreakA = data.TieBreak.Answer;
             for(var i = 0; i < Object.keys(data.Questions).length - 1; i++) {
                 allQuestions[i] = data.Questions[i].text;
                 extraData[i] = {};
@@ -457,10 +465,14 @@
         });
         firebase.database().ref('currentQuestion').on('value', function(snapshot) {
             var currentData = snapshot.val();
-            if(currentData != "no") {
-                document.getElementById('currentQuestion').style.display = "block";
-                document.getElementById('table').style.display = "none";
-                document.getElementById('currentQuestion').innerHTML = allQuestions[currentNum] + "<br><p style='font-size: 25px;'>" + extraData[currentNum][0] + "<br>" + extraData[currentNum][1] + "<br>" + extraData[currentNum][2] + "<br>" + extraData[currentNum][3] + "</p>";
+            if(currentData != "no" && currentData != "tb") {
+                if(currentData == "done") {
+                    
+                } else {
+                    document.getElementById('currentQuestion').style.display = "block";
+                    document.getElementById('table').style.display = "none";
+                    document.getElementById('currentQuestion').innerHTML = allQuestions[currentNum] + "<br><p style='font-size: 25px;'>" + extraData[currentNum][0] + "<br>" + extraData[currentNum][1] + "<br>" + extraData[currentNum][2] + "<br>" + extraData[currentNum][3] + "</p>";
+                }
             }
         });
         firebase.database().ref('showAnswer').on('value', function(snapshot) {
@@ -475,15 +487,33 @@
         });
         firebase.database().ref('roundOver').on('value', function(snapshot) {
             var roundData = snapshot.val();
+            isRoundOver = true;
             if(roundData == true) {
                 createLeaderboard();
             }
         });
         firebase.database().ref('ended').on('value', function(snapshot) {
             var endData = snapshot.val();
-            if(endData == true) {
+            if(endData == true || endData == "sorta") {
                 done = true;
                 createLeaderboard();
+            }
+        });
+        firebase.database().ref().once('value').then(function(snapshot) {
+            var leaderData = snapshot.val();
+            for(var e = 0; e < Object.keys(leaderData.Teams).length - 1; e++) (function(e) {
+                leaders[e] = {};
+                leaders[e].points = leaderData.Teams[e].points;
+                leaders[e].name = leaderData.Teams[e].name;
+                leaders[e].teamNum = e;
+            })(e);
+            var newObj = bubble_Sort(leaders);
+            console.log(newObj)
+            if(leaders[0].points == leaders[1].points && tieBreak && !isRoundOver) {
+                enterTieBreak(newObj);
+            } else {
+                addToTable(newObj);
+                isRoundOver = false;
             }
         });
         function createLeaderboard() {
@@ -498,20 +528,31 @@
             firebase.database().ref().once('value').then(function(snapshot) {
                 var leaderData = snapshot.val();
                 for(var e = 0; e < Object.keys(leaderData.Teams).length - 1; e++) (function(e) {
+                    leaders[e] = {};
                     leaders[e].points = leaderData.Teams[e].points;
                     leaders[e].name = leaderData.Teams[e].name;
+                    leaders[e].teamNum = e;
                 })(e);
                 var newObj = bubble_Sort(leaders);
-                addToTable(newObj);
+                if(leaders[0].points == leaders[1].points && tieBreak) {
+                    enterTieBreak(newObj);
+                } else {
+                    addToTable(newObj);
+                }
             });
         }
         function bubble_Sort(a) {
             var swapp;
-            var n = 124;
+            var n = Object.keys(a).length - 1;
+            console.log(n)
             var x = a;
+            console.log(x);
             do {
+                console.log("SWAPPING")
                 swapp = false;
-                for (var i=0; i < n; i++) {
+                for (var i = 0; i < n; i++) {
+                    console.log(i);
+                    console.log(x[i - 1]);
                     if (x[i].points < x[i+1].points) {
                         console.log("ye")
                         var temp = x[i];
@@ -524,9 +565,35 @@
             } while (swapp);
             return x; 
         }
+        function enterTieBreak(sortedLeaders) {
+            var line = "";
+            var displayLine = "Tiebreak for the following teams:";
+            var topPoints = sortedLeaders[0].points;
+            for(var i = 0; i < Object.keys(sortedLeaders).length; i++) {
+                if(sortedLeaders[i].points == topPoints) {
+                    line += sortedLeaders[i].teamNum + ",";
+                    displayLine += "&nbsp;" + sortedLeaders[i].name;
+                } else {
+                    break;
+                }
+            }
+            document.getElementById("currentQuestion").innerHTML = displayLine;
+            firebase.database().ref().update({
+                currentQuestion: "tb"
+            });
+            firebase.database().ref('TieBreak').update({
+                teams: line
+            });
+            firebase.database().ref("tieBreakStarted").on('value', function(snapshot) {
+                var ifStarted = snapshot.val();
+                if(ifStarted) {
+                    document.getElementById("currentQuestion").innerHTML = tieBreakQ;
+                }
+            });
+        }
         function addToTable(leaderObject) {
             document.getElementById('currentQuestion').style.display = "none";
-            for(var o = 0; o < 126; o++) {
+            for(var o = 0; o < Object.keys(leaderObject).length; o++) {
                 if(leaderObject[o].name != "") {
                     var leaderRow = document.createElement("tr");
                     leaderRow.id = "tr" + o;

@@ -58,8 +58,13 @@
         var maxOut = 100;
         var answerNow = "";
         var currentType = "";
+        var tieBreakQuestion;
+        var tieBreakAnswer;
+        var inTieBreak;
         firebase.database().ref().once('value').then(function(snapshot) {
             var questionData = snapshot.val();
+            tieBreakQuestion = questionData.TieBreak.Question;
+            tieBreakAnswer = questionData.TieBreak.Answer;
             perRound = parseInt(questionData.perRound);
             maxOut = Object.keys(questionData.Questions).length - 2;
             if(questionData.Questions[0] != null) {
@@ -83,7 +88,7 @@
             } else if(hasStarted == true) {
                 var answerData = snapshot.val();
                 for(var a = 0; a < Object.keys(answerData).length - 1; a++) {
-                    if(answerData[a].currentAnswer != answers[a] && answerData[a].currentAnswer != "") {
+                    if(answerData[a].currentAnswer != answers[a] && answerData[a].currentAnswer != "" && !inTieBreak) {
                         answers[a] = answerData[a].currentAnswer;
                         document.getElementById('currentAnswer' + a).style.display = "block";
                         document.getElementById('currentAnswer' + a).innerHTML = answers[a];
@@ -96,8 +101,38 @@
                                 answerWrong(a);
                             }
                         }
+                    } else if(inTieBreak && answerData[a].currentAnswer != answers[a] && answerData[a].currentAnswer) {
+                        answers[a] = answerData[a].currentAnswer;
+                        if(!isNaN(parseInt(answers[a]))) {
+                            document.getElementById('currentAnswer' + a).innerHTML = "NaN: " + answers[a];
+                        }
+                        document.getElementById('currentAnswer' + a).style.display = "block";
+                        document.getElementById('currentAnswer' + a).innerHTML = Math.abs(parseInt(tieBreakAnswer) - parseInt(answers[a])).toString() + " off";
+                        document.getElementById('win' + a).style.display = "block";
+                        if(currentType == "mc") {
+                            if(answers[a] == answerNow) {
+                                answerCorrect(a);
+                            } else {
+                                answerWrong(a);
+                            }
+                        }
                     }
                 }
+            }
+        });
+        firebase.database().ref('currentQuestion').on('value', function(snapshot) {
+            var cQuestionCurrent = snapshot.val();
+            if(cQuestionCurrent == "tb") {
+                inTieBreak = "about";
+                document.getElementById('nextQuestion').innerHTML = "Start Tiebreak";
+                document.getElementById('showAnswer').style.display = "block";
+                document.getElementById('questionText').style.display = "block";
+                document.getElementById('timeLeft').style.display = "block";
+                document.getElementById('answerText').style.display = "block";
+                document.getElementById('questionText').innerHTML = tieBreakQuestion;
+                document.getElementById('answerText').innerHTML = tieBreakAnswer;
+                answerNow = tieBreakAnswer;
+                currentType = "tb";
             }
         });
         function answerCorrect(teamNum) {
@@ -148,6 +183,11 @@
                     wrongBtn.innerHTML = "Wrong";
                     wrongBtn.onclick = function() {answerWrong(i)};
                     wrongBtn.style.display = "none";
+                    var winBtn = document.createElement("button");
+                    winBtn.id = "win" + i;
+                    winBtn.innerHTML = "WIN";
+                    winBtn.onclick = function() {winBtn(i)};
+                    winBtn.style.display = "none";
                     row.appendChild(teamName);
                     row.appendChild(teamPointsH);
                     row.appendChild(currentAnswer);
@@ -170,40 +210,77 @@
             document.getElementById('startGame').style.display = "none";
         }
         function nextQuestion() {
-            if(questionNum % perRound == 0 && haveDone == false && questionNum != 0) {
-                if(questionNum == maxOut + 1) { //HMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-                    alert("Game Ended.");
-                    firebase.database().ref().update({
-                        ended: true
-                    });
-                } else {
-                    haveDone = true;
-                    alert("End of round");
-                    firebase.database().ref().update({
-                        roundOver: true
-                    });
-                }
-            } else {
-                haveDone = false;
-                startTimer();
-                document.getElementById('nextQuestion').innerHTML = "Next Question";
-                document.getElementById('showAnswer').style.display = "block";
-                document.getElementById('questionText').style.display = "block";
-                document.getElementById('timeLeft').style.display = "block";
-                document.getElementById('answerText').style.display = "block";
+            if(inTieBreak == "about") {
                 firebase.database().ref().update({
-                    currentQuestion: questionNum
+                    inTieBreak: true
                 });
-                var questionText = document.getElementById('ques' + questionNum).innerHTML.split(" - ");
-                var takeOffFirst = questionText[0].replace("<b>", "");
-                var final = takeOffFirst.replace("</b>", "");
-                document.getElementById('questionText').innerHTML = final;
-                document.getElementById('answerText').innerHTML = questionText[1];
-                answerNow = questionText[1];
-                document.getElementById('ques' + questionNum).remove();
-                currentType = questionText[2];
-                questionNum++;
+                inTieBreak = true;
+            } else {
+                if(questionNum % perRound == 0 && haveDone == false && questionNum != 0) {
+                    if(questionNum == maxOut + 1) {
+                        alert("Game Ended.");
+                        var totalInstances = 0;
+                        var max = teamPoints[0];
+                        for(var i = 1; i < Object.keys(teamPoints).length; i++) {
+                            if(teamPoints[i] > max) {
+                                max = teamPoints[i];
+                            }
+                        }
+                        for(var i = 0; i < Object.keys(teamPoints).length; i++) {
+                            if(teamPoints[i] == max) {
+                                totalInstances += 1;
+                            }
+                        }
+                        if(totalInstances > 1) {
+                            firebase.database().ref().update({
+                                ended: "sorta"
+                            });
+                        } else {
+                            firebase.database().ref().update({
+                                ended: true
+                            });
+                        }
+                    } else {
+                        haveDone = true;
+                        alert("End of round");
+                        firebase.database().ref().update({
+                            roundOver: true
+                        });
+                    }
+                } else {
+                    haveDone = false;
+                    startTimer();
+                    document.getElementById('nextQuestion').innerHTML = "Next Question";
+                    document.getElementById('showAnswer').style.display = "block";
+                    document.getElementById('questionText').style.display = "block";
+                    document.getElementById('timeLeft').style.display = "block";
+                    document.getElementById('answerText').style.display = "block";
+                    firebase.database().ref().update({
+                        currentQuestion: questionNum
+                    });
+                    var questionText = document.getElementById('ques' + questionNum).innerHTML.split(" - ");
+                    var takeOffFirst = questionText[0].replace("<b>", "");
+                    var final = takeOffFirst.replace("</b>", "");
+                    document.getElementById('questionText').innerHTML = final;
+                    document.getElementById('answerText').innerHTML = questionText[1];
+                    answerNow = questionText[1];
+                    document.getElementById('ques' + questionNum).remove();
+                    currentType = questionText[2];
+                    questionNum++;
+                }
             }
+        }
+        function winBtn(forTeam) {
+            firebase.database().ref('Teams/' + forTeam).update({
+                currentAnswer: "",
+                points: teamPoints[forTeam] + 10,
+                outcome: true
+            });
+            teamPoints[forTeam] += 10;
+            document.getElementById('teamPoints' + teamNum).innerHTML = teamPoints[teamNum].toString();
+            firebase.database().ref().update({
+                ended: true
+            });
         }
         function startTimer() {
             timerId = setInterval(countdown, 1000);

@@ -78,9 +78,14 @@
         var timerId;
         var questionNum;
         var myPoints = 0;
+        var tieBreakQ;
+        var tieBreakA;
+        var isInTieBreak = false;
         var elem = document.getElementById('timeLeft');
         firebase.database().ref().once('value').then(function(snapshot) {
             var data = snapshot.val();
+            tieBreakQ = data.TieBreak.Question;
+            tieBreakA = data.TieBreak.Answer;
             for(var i = 0; i < Object.keys(data.Questions).length - 1; i++) {
                 allQuestions[i] = data.Questions[i].text;
                 if(data.Questions[i].type == "fr") {
@@ -276,11 +281,13 @@
         function listenForQuestion() {
             firebase.database().ref('currentQuestion').on('value', function(snapshot) {
                 var preQuestionData = snapshot.val();
-                if(preQuestionData != "no") {
+                if(preQuestionData != "no" && preQuestionData != "tb") {
                     questionNum = preQuestionData;
                     newQuestion(preQuestionData);
                     document.getElementById('all').style.backgroundColor = "white";
                     document.getElementById('answer').value = "";
+                } else if(preQuestionData == "tb") {
+                    checkForTieBreak();
                 }
             });
             firebase.database().ref('roundOver').on('value', function(snapshot) {
@@ -295,10 +302,50 @@
                 }
             });
         }
+        function checkForTieBreak() {
+            firebase.database().ref().once('value').then(function(snapshot) {
+                var allTieBreakData = snapshot.val();
+                var teamsForTieBreak = allTieBreakData.TieBreak.teams.split(",");
+                for(var i = 0; i < teamsForTieBreak.length - 1; i++) {
+                    if(teamNum == teamsForTieBreak[i]) {
+                        isInTieBreak == true;
+                        break;
+                    }
+                }
+                if(isInTieBreak) {
+                    document.getElementById('waitingForGame').style.display = "none";
+                    document.getElementById('postQuestion').style.display = "none";
+                    document.getElementById('waitingForQuestion').style.display = "none";
+                    document.getElementById('question').style.display = "none";
+                    document.getElementById('gameEnded').style.display = "block";
+                    document.getElementById('gameEndedText').innerHTML = "You're in the tiebreak! Wait for the question.";
+                    listenForTieBreakStart();
+                }
+            });
+        }
+        function listenForTieBreakStart() {
+            firebase.database().ref('tieBreakStarted').on('value', function(snapshot) {
+                if(snapshot.val() == true) {
+                    document.getElementById('gameEndedText').innerHTML = "The game has ended. Look up on Zoom to see the rankings.";
+                    document.getElementById('waitingForGame').style.display = "none";
+                    document.getElementById('postQuestion').style.display = "none";
+                    document.getElementById('waitingForQuestion').style.display = "none";
+                    document.getElementById('question').style.display = "block";
+                    document.getElementById('question').style.display = "block";
+                    document.getElementById('fr').style.display = "block";
+                    document.getElementById('mc').style.display = "none";
+                    clearTimeout(timerId);
+                    timeLeft = 20;
+                    document.getElementById('question-place').innerHTML = tieBreakQ;
+                    startTimer();
+                }
+            });
+        }
         function listenForEnd() {
             firebase.database().ref('ended').on('value', function(snapshot) {
                 var endData = snapshot.val();
                 if(endData == true) {
+                    document.getElementById('all').style.backgroundColor = "white";
                     document.getElementById('waitingForGame').style.display = "none";
                     document.getElementById('postQuestion').style.display = "none";
                     document.getElementById('waitingForQuestion').style.display = "none";
