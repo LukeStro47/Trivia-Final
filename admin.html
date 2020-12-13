@@ -188,6 +188,7 @@
                     row.appendChild(check);
                     check.appendChild(correctBtn);
                     check.appendChild(wrongBtn);
+                    check.appendChild(winBtn)
                     document.getElementById('teams').appendChild(row);
                 }
             })(i);
@@ -206,7 +207,7 @@
         function nextQuestion() {
             if(inTieBreak == "about") {
                 firebase.database().ref().update({
-                    inTieBreak: true
+                    tieBreakStarted: true
                 });
                 inTieBreak = true;
                 timeLeft = 45;
@@ -306,7 +307,8 @@
                 started: false,
                 showAnswer: false,
                 roundOver: false,
-                currentQuestion: "no"
+                currentQuestion: "no",
+                tieBreakStarted: false
             });
             setTimeout(function(){ location.reload(); }, 750);
         }

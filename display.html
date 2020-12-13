@@ -483,8 +483,8 @@
         });
         firebase.database().ref('roundOver').on('value', function(snapshot) {
             var roundData = snapshot.val();
-            isRoundOver = true;
             if(roundData == true) {
+                isRoundOver = true;
                 createLeaderboard();
             }
         });
