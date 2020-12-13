@@ -51,12 +51,12 @@
                 <button onclick="clearTimeout(timerId); answer()">Submit</button>
             </div>
             <div id="mc">
-                <button onclick="answerMC(0)" id="answer0">-</button>
-                <button onclick="answerMC(1)" id="answer1">-</button>
-                <button onclick="answerMC(2)" id="answer2">-</button>
-                <button onclick="answerMC(3)" id="answer3">-</button>
+                <button onclick="clearTimeout(timerId); answerMC(0)" id="answer0">-</button>
+                <button onclick="clearTimeout(timerId); answerMC(1)" id="answer1">-</button>
+                <button onclick="clearTimeout(timerId); answerMC(2)" id="answer2">-</button>
+                <button onclick="clearTimeout(timerId); answerMC(3)" id="answer3">-</button>
             </div>
-            <h3 id="timeLeft">25 seconds remaining</h3>
+            <h3 id="timeLeft">20 seconds remaining</h3>
         </div>
     </body>
     <script>
@@ -74,18 +74,16 @@
         var teamNum = 111;
         var allQuestions = [];
         var extraData = {};
-        var timeLeft = 25;
+        var timeLeft = 20;
         var timerId;
         var questionNum;
         var myPoints = 0;
         var tieBreakQ;
-        var tieBreakA;
         var isInTieBreak = false;
         var elem = document.getElementById('timeLeft');
         firebase.database().ref().once('value').then(function(snapshot) {
             var data = snapshot.val();
             tieBreakQ = data.TieBreak.Question;
-            tieBreakA = data.TieBreak.Answer;
             for(var i = 0; i < Object.keys(data.Questions).length - 1; i++) {
                 allQuestions[i] = data.Questions[i].text;
                 if(data.Questions[i].type == "fr") {
@@ -182,7 +180,7 @@
                 }
             }
             clearTimeout(timerId);
-            timeLeft = 25;
+            timeLeft = 20;
             document.getElementById('question-place').innerHTML = allQuestions[number];
             startTimer();
         }
@@ -199,7 +197,7 @@
             }
         }
         function answer() {
-            elem.innerHTML = '25 seconds remaining';
+            elem.innerHTML = '20 seconds remaining';
             if(timeLeft != 0) {
                 firebase.database().ref('Teams/' + teamNum).update({
                     currentAnswer: document.getElementById('answer').value,
@@ -211,35 +209,37 @@
                     outcome: "unknown"
                 });
             }
-            timeLeft = 25;
+            timeLeft = 20;
             document.getElementById('question').style.display = "none";
             document.getElementById('postQuestion').style.display = "block";
-            firebase.database().ref('Teams/' + teamNum).on('value', function(snapshot) {
-                var answerData = snapshot.val();
-                myPoints = answerData.points;
-                if(answerData.outcome != "unknown") {
-                    if(answerData.outcome == true) {
-                        document.getElementById('all').style.backgroundColor = "lightGreen";
-                        document.getElementById('postQuestion').style.display = "none";
-                        document.getElementById('waitingForQuestion').style.display = "block";
-                        document.getElementById('outcome').innerHTML = "You got that one right!";
-                        document.getElementById('pointCount').innerHTML = "Points: " + myPoints;
-                        document.getElementById('postAnswer').innerHTML = "Answer: " + extraData[questionNum];
-                        firebase.database().ref('Teams/' + teamNum).off('value');
-                    } else {
-                        document.getElementById('all').style.backgroundColor = "#f7584d";
-                        document.getElementById('postQuestion').style.display = "none";
-                        document.getElementById('waitingForQuestion').style.display = "block";
-                        document.getElementById('outcome').innerHTML = "You got that one wrong.";
-                        document.getElementById('pointCount').innerHTML = "Points: " + myPoints;
-                        document.getElementById('postAnswer').innerHTML = "Answer: " + extraData[questionNum];
-                        firebase.database().ref('Teams/' + teamNum).off('value');
+            if(!isInTieBreak) {
+                firebase.database().ref('Teams/' + teamNum).on('value', function(snapshot) {
+                    var answerData = snapshot.val();
+                    myPoints = answerData.points;
+                    if(answerData.outcome != "unknown") {
+                        if(answerData.outcome == true) {
+                            document.getElementById('all').style.backgroundColor = "lightGreen";
+                            document.getElementById('postQuestion').style.display = "none";
+                            document.getElementById('waitingForQuestion').style.display = "block";
+                            document.getElementById('outcome').innerHTML = "You got that one right!";
+                            document.getElementById('pointCount').innerHTML = "Points: " + myPoints;
+                            document.getElementById('postAnswer').innerHTML = "Answer: " + extraData[questionNum][extraData[questionNum].extra];
+                            firebase.database().ref('Teams/' + teamNum).off('value');
+                        } else {
+                            document.getElementById('all').style.backgroundColor = "#f7584d";
+                            document.getElementById('postQuestion').style.display = "none";
+                            document.getElementById('waitingForQuestion').style.display = "block";
+                            document.getElementById('outcome').innerHTML = "You got that one wrong.";
+                            document.getElementById('pointCount').innerHTML = "Points: " + myPoints;
+                            document.getElementById('postAnswer').innerHTML = "Answer: " + extraData[questionNum][extraData[questionNum].extra];
+                            firebase.database().ref('Teams/' + teamNum).off('value');
+                        }
                     }
-                }
-            });
+                });
+            }
         }
         function answerMC(theAnswerNum) {
-            elem.innerHTML = '45 seconds remaining';
+            elem.innerHTML = '20 seconds remaining';
             if(timeLeft != 0) {
                 firebase.database().ref('Teams/' + teamNum).update({
                     currentAnswer: document.getElementById("answer" + theAnswerNum).innerHTML,
@@ -251,7 +251,7 @@
                     outcome: "unknown"
                 });
             }
-            timeLeft = 25;
+            timeLeft = 20;
             document.getElementById('question').style.display = "none";
             document.getElementById('postQuestion').style.display = "block";
             firebase.database().ref('Teams/' + teamNum).on('value', function(snapshot) {
@@ -297,7 +297,7 @@
                         document.getElementById('question').style.display = "none";
                         document.getElementById('postQuestion').style.display = "block";
                         clearTimeout(timerId);
-                        timeLeft = 25;
+                        timeLeft = 20;
                     }
                 }
             });
@@ -308,8 +308,10 @@
                 var teamsForTieBreak = allTieBreakData.TieBreak.teams.split(",");
                 for(var i = 0; i < teamsForTieBreak.length - 1; i++) {
                     if(teamNum == teamsForTieBreak[i]) {
-                        isInTieBreak == true;
+                        isInTieBreak = true;
                         break;
+                    } else {
+                        isInTieBreak = false;
                     }
                 }
                 if(isInTieBreak) {
@@ -325,17 +327,17 @@
         }
         function listenForTieBreakStart() {
             firebase.database().ref('tieBreakStarted').on('value', function(snapshot) {
-                if(snapshot.val() == true) {
+                var waitingForStart = snapshot.val();
+                if(waitingForStart == true) {
                     document.getElementById('gameEndedText').innerHTML = "The game has ended. Look up on Zoom to see the rankings.";
+                    document.getElementById('gameEnded').style.display = "none";
                     document.getElementById('waitingForGame').style.display = "none";
                     document.getElementById('postQuestion').style.display = "none";
                     document.getElementById('waitingForQuestion').style.display = "none";
                     document.getElementById('question').style.display = "block";
-                    document.getElementById('question').style.display = "block";
                     document.getElementById('fr').style.display = "block";
                     document.getElementById('mc').style.display = "none";
-                    clearTimeout(timerId);
-                    timeLeft = 20;
+                    timeLeft = 40;
                     document.getElementById('question-place').innerHTML = tieBreakQ;
                     startTimer();
                 }

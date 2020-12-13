@@ -51,7 +51,7 @@
         var teamPoints = new Array(125);
         var questionNum = 0;
         var pointCount = [];
-        var timeLeft = 50;
+        var timeLeft = 25;
         var timerId;
         var elem = document.getElementById('timeLeft');
         var perRound = 0;
@@ -60,7 +60,7 @@
         var currentType = "";
         var tieBreakQuestion;
         var tieBreakAnswer;
-        var inTieBreak;
+        var inTieBreak = false;
         firebase.database().ref().once('value').then(function(snapshot) {
             var questionData = snapshot.val();
             tieBreakQuestion = questionData.TieBreak.Question;
@@ -103,18 +103,12 @@
                         }
                     } else if(inTieBreak && answerData[a].currentAnswer != answers[a] && answerData[a].currentAnswer) {
                         answers[a] = answerData[a].currentAnswer;
-                        if(!isNaN(parseInt(answers[a]))) {
+                        if(isNaN(parseInt(answers[a]))) {
                             document.getElementById('currentAnswer' + a).innerHTML = "NaN: " + answers[a];
-                        }
-                        document.getElementById('currentAnswer' + a).style.display = "block";
-                        document.getElementById('currentAnswer' + a).innerHTML = Math.abs(parseInt(tieBreakAnswer) - parseInt(answers[a])).toString() + " off";
-                        document.getElementById('win' + a).style.display = "block";
-                        if(currentType == "mc") {
-                            if(answers[a] == answerNow) {
-                                answerCorrect(a);
-                            } else {
-                                answerWrong(a);
-                            }
+                        } else {
+                            document.getElementById('currentAnswer' + a).style.display = "block";
+                            document.getElementById('currentAnswer' + a).innerHTML = Math.abs(parseInt(tieBreakAnswer) - parseInt(answers[a])).toString() + " off";
+                            document.getElementById('win' + a).style.display = "block";
                         }
                     }
                 }
@@ -186,7 +180,7 @@
                     var winBtn = document.createElement("button");
                     winBtn.id = "win" + i;
                     winBtn.innerHTML = "WIN";
-                    winBtn.onclick = function() {winBtn(i)};
+                    winBtn.onclick = function() {winGame(i)};
                     winBtn.style.display = "none";
                     row.appendChild(teamName);
                     row.appendChild(teamPointsH);
@@ -215,6 +209,8 @@
                     inTieBreak: true
                 });
                 inTieBreak = true;
+                timeLeft = 45;
+                startTimer();
             } else {
                 if(questionNum % perRound == 0 && haveDone == false && questionNum != 0) {
                     if(questionNum == maxOut + 1) {
@@ -270,7 +266,7 @@
                 }
             }
         }
-        function winBtn(forTeam) {
+        function winGame(forTeam) {
             firebase.database().ref('Teams/' + forTeam).update({
                 currentAnswer: "",
                 points: teamPoints[forTeam] + 10,
@@ -289,7 +285,7 @@
             if (timeLeft == 0) {
                 clearTimeout(timerId);
                 alert("Out of time");
-                timeLeft = 30;
+                timeLeft = 25;
             } else {
                 elem.innerHTML = timeLeft + ' seconds remaining';
                 timeLeft--;
@@ -297,7 +293,7 @@
         }
         function showAnswer() {
             clearTimeout(timerId);
-            timeLeft = 30;
+            timeLeft = 25;
             document.getElementById('timeLeft').style.display = "none";
             firebase.database().ref().update({
                 showAnswer: true

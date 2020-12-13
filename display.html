@@ -466,13 +466,9 @@
         firebase.database().ref('currentQuestion').on('value', function(snapshot) {
             var currentData = snapshot.val();
             if(currentData != "no" && currentData != "tb") {
-                if(currentData == "done") {
-                    
-                } else {
-                    document.getElementById('currentQuestion').style.display = "block";
-                    document.getElementById('table').style.display = "none";
-                    document.getElementById('currentQuestion').innerHTML = allQuestions[currentNum] + "<br><p style='font-size: 25px;'>" + extraData[currentNum][0] + "<br>" + extraData[currentNum][1] + "<br>" + extraData[currentNum][2] + "<br>" + extraData[currentNum][3] + "</p>";
-                }
+                document.getElementById('currentQuestion').style.display = "block";
+                document.getElementById('table').style.display = "none";
+                document.getElementById('currentQuestion').innerHTML = allQuestions[currentNum] + "<br><p style='font-size: 25px;'>" + extraData[currentNum][0] + "<br>" + extraData[currentNum][1] + "<br>" + extraData[currentNum][2] + "<br>" + extraData[currentNum][3] + "</p>";
             }
         });
         firebase.database().ref('showAnswer').on('value', function(snapshot) {
