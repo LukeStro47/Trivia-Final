@@ -51,12 +51,12 @@
                 <button onclick="clearTimeout(timerId); answer()">Submit</button>
             </div>
             <div id="mc">
-                <button onclick="clearTimeout(timerId); answerMC(0)" id="answer0">-</button>
-                <button onclick="clearTimeout(timerId); answerMC(1)" id="answer1">-</button>
-                <button onclick="clearTimeout(timerId); answerMC(2)" id="answer2">-</button>
+                <button onclick="clearTimeout(timerId); answerMC(0)" id="answer0">-</button><br><br>
+                <button onclick="clearTimeout(timerId); answerMC(1)" id="answer1">-</button><br><br>
+                <button onclick="clearTimeout(timerId); answerMC(2)" id="answer2">-</button><br><br>
                 <button onclick="clearTimeout(timerId); answerMC(3)" id="answer3">-</button>
             </div>
-            <h3 id="timeLeft">20 seconds remaining</h3>
+            <h3 id="timeLeft">15 seconds remaining</h3>
         </div>
     </body>
     <script>
@@ -74,7 +74,7 @@
         var teamNum = 111;
         var allQuestions = [];
         var extraData = {};
-        var timeLeft = 20;
+        var timeLeft = 15;
         var timerId;
         var questionNum;
         var myPoints = 0;
@@ -180,7 +180,7 @@
                 }
             }
             clearTimeout(timerId);
-            timeLeft = 20;
+            timeLeft = 15;
             document.getElementById('question-place').innerHTML = allQuestions[number];
             startTimer();
         }
@@ -197,7 +197,7 @@
             }
         }
         function answer() {
-            elem.innerHTML = '20 seconds remaining';
+            elem.innerHTML = '15 seconds remaining';
             if(timeLeft != 0) {
                 firebase.database().ref('Teams/' + teamNum).update({
                     currentAnswer: document.getElementById('answer').value,
@@ -209,7 +209,7 @@
                     outcome: "unknown"
                 });
             }
-            timeLeft = 20;
+            timeLeft = 15;
             document.getElementById('question').style.display = "none";
             document.getElementById('postQuestion').style.display = "block";
             if(!isInTieBreak) {
@@ -239,7 +239,7 @@
             }
         }
         function answerMC(theAnswerNum) {
-            elem.innerHTML = '20 seconds remaining';
+            elem.innerHTML = '15 seconds remaining';
             if(timeLeft != 0) {
                 firebase.database().ref('Teams/' + teamNum).update({
                     currentAnswer: document.getElementById("answer" + theAnswerNum).innerHTML,
@@ -251,7 +251,7 @@
                     outcome: "unknown"
                 });
             }
-            timeLeft = 20;
+            timeLeft = 15;
             document.getElementById('question').style.display = "none";
             document.getElementById('postQuestion').style.display = "block";
             firebase.database().ref('Teams/' + teamNum).on('value', function(snapshot) {
@@ -297,7 +297,7 @@
                         document.getElementById('question').style.display = "none";
                         document.getElementById('postQuestion').style.display = "block";
                         clearTimeout(timerId);
-                        timeLeft = 20;
+                        timeLeft = 15;
                     }
                 }
             });
@@ -310,8 +310,6 @@
                     if(teamNum == teamsForTieBreak[i]) {
                         isInTieBreak = true;
                         break;
-                    } else {
-                        isInTieBreak = false;
                     }
                 }
                 if(isInTieBreak) {
@@ -337,7 +335,7 @@
                     document.getElementById('question').style.display = "block";
                     document.getElementById('fr').style.display = "block";
                     document.getElementById('mc').style.display = "none";
-                    timeLeft = 40;
+                    timeLeft = 25;
                     document.getElementById('question-place').innerHTML = tieBreakQ;
                     startTimer();
                 }
@@ -353,7 +351,9 @@
                     document.getElementById('waitingForQuestion').style.display = "none";
                     document.getElementById('question').style.display = "none";
                     document.getElementById('gameEnded').style.display = "block";
-                    document.getElementById('gameEndedText').innerHTML += " You scored a total of " + myPoints + " points.";
+                    if(!isInTieBreak) {
+                        document.getElementById('gameEndedText').innerHTML += " You scored a total of " + myPoints + " points.";
+                    }
                     Cookies.remove('myTeamNumber');
                     firebase.database().ref('ended').off('value');
                 }
